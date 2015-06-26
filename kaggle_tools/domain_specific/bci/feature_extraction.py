@@ -7,7 +7,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_X_y
 
 
-class WindowOffsetsAmplitudesGenerator(BaseEstimator, TransformerMixin):
+class WindowOffsetsAmplitudes(BaseEstimator, TransformerMixin):
     """
         Finds average amplitudes of a signal obtained at different offsets from the start and at different window sizes
             piece = offset : offset + window_size
@@ -43,7 +43,7 @@ class WindowOffsetsAmplitudesGenerator(BaseEstimator, TransformerMixin):
         return amplitudes
 
 
-class TemplateCovariancesGenerator(BaseEstimator, TransformerMixin):
+class TemplateCovariances(BaseEstimator, TransformerMixin):
     """
         Finds correlations, covariances, maximum cross correlations and distance for average signal(template).
         Demands as input (n_samples, n_ticks) ndarray for one channel.
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     X = np.array([range(100), range(100)])
     print(X.shape)
 
-    transformer = WindowOffsetsAmplitudesGenerator(window_sizes=range(10, 100, 10),
+    transformer = WindowOffsetsAmplitudes(window_sizes=range(10, 100, 10),
                                                    offsets=range(10, 100, 10),
                                                    allow_partial_slices=False)
     print(transformer.fit_transform(X))

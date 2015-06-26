@@ -7,7 +7,7 @@ from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
 
 
-class HighOrderFeaturesGenerator(BaseEstimator, TransformerMixin):
+class HighOrderFeatures(BaseEstimator, TransformerMixin):
     # TODO: check correctness
     # TODO: optimize hashings
     # TODO: check for compatibility with feature union
@@ -33,6 +33,27 @@ class HighOrderFeaturesGenerator(BaseEstimator, TransformerMixin):
 class SparseOneHotEncoder(BaseEstimator, TransformerMixin):
     """
         OneHotEncoder based on scipy.sparse
+
+        look on
+            http://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.FeatureHasher.html
+        and comparison at the bottom.
+
+        Difference:
+        OneHotEncoder takes as input categorical values encoded as integers - you can get them from LabelEncoder.
+
+        DictVectorizer expects data as a list of dictionaries, where each dictionary is a data row with column names as keys:
+        [ { 'foo': 1, 'bar': 'z' },
+      { 'foo': 2, 'bar': 'a' },
+      { 'foo': 3, 'bar': 'c' } ]
+
+      After vectorizing and saving as CSV it would look like this:
+      foo,bar=z,bar=a,bar=c
+        1,1,0,0
+        2,0,1,0
+        3,0,0,1
+        Notice the column names and that DictVectorizer doesn't touch numeric values.
+
+        http://fastml.com/converting-categorical-data-into-numbers-with-pandas-and-scikit-learn/
     """
     def __init__(self, keymap=None):
         self.keymap = keymap
