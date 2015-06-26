@@ -9,7 +9,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 class HighOrderFeaturesGenerator(BaseEstimator, TransformerMixin):
     # TODO: check correctness
-    # TODO: optimize
+    # TODO: optimize hashings
     # TODO: check for compatibility with feature union
     def __init__(self, degree=2, feature_locations=None):
         self.degree = degree
