@@ -32,3 +32,7 @@ def distance_matrix(data, distance='euclidean'):
                 distance_matrix[i, j] = nan_tolerant_euclidean(data[i, :], data[j, :])
         return dist_matrix
     raise NotImplementedError
+
+
+def pprint_cross_val_scores(scores):
+    print("%0.8f (+/-%0.05f)" % (scores.mean(), scores.std()))

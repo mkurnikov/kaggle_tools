@@ -1,4 +1,5 @@
 from __future__ import division, absolute_import, print_function, unicode_literals
+
 from itertools import combinations
 import sys
 import numpy as np
@@ -8,9 +9,16 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 
 class HighOrderFeatures(BaseEstimator, TransformerMixin):
+    """
+        Look at (similar idea)
+        http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PolynomialFeatures.html
+
+
+    """
     # TODO: check correctness
     # TODO: optimize hashings
     # TODO: check for compatibility with feature union
+
     def __init__(self, degree=2, feature_locations=None):
         self.degree = degree
         self.feature_locations = feature_locations
@@ -36,6 +44,7 @@ class SparseOneHotEncoder(BaseEstimator, TransformerMixin):
 
         look on
             http://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.FeatureHasher.html
+            http://scikit-learn.org/stable/modules/feature_extraction.html#dict-feature-extraction
         and comparison at the bottom.
 
         Difference:
@@ -55,6 +64,8 @@ class SparseOneHotEncoder(BaseEstimator, TransformerMixin):
 
         http://fastml.com/converting-categorical-data-into-numbers-with-pandas-and-scikit-learn/
     """
+
+
     def __init__(self, keymap=None):
         self.keymap = keymap
 
