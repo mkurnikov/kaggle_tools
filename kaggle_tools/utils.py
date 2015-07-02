@@ -35,4 +35,6 @@ def distance_matrix(data, distance='euclidean'):
 
 
 def pprint_cross_val_scores(scores):
+    if type(scores) == list:
+        scores = np.array(scores)
     print("%0.8f (+/-%0.05f)" % (scores.mean(), scores.std()))

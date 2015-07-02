@@ -2,8 +2,29 @@ from __future__ import division, print_function, unicode_literals
 
 import numpy as np
 import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
+from kaggle_tools.base import BaseEstimator, TransformerMixin
+from sklearn.utils.validation import check_is_fitted
 import six
+import collections
+
+
+class DataFrameTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self, transformer=None):
+        if transformer is None:
+            raise ValueError('Transformer has to be provided, in order this to work.')
+        self.transformer = transformer
+
+
+    def fit(self, X, y=None):
+        self.transformer.fit(X, y)
+        return self
+
+
+    def transform(self, X):
+        if not isinstance(X, pd.DataFrame):
+            raise ValueError('Wrapper can only be used for pandas DataFrames.')
+
+        return pd.DataFrame(self.transformer.transform(X), index=X.index, columns=X.columns)
 
 
 class DataFrameMapper(BaseEstimator, TransformerMixin):
@@ -14,18 +35,23 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
 
 
-    def __init__(self, features, return_df=True):
+    def __init__(self, features, return_df=True, rest_unchanged=True):
         """
         Params:
 
-        features    a list of pairs. The first element is the pandas column
-                    selector. This can be a string (for one column) or a list
-                    of strings. The second element is an object that supports
-                    sklearn's transform interface.
-        return_df   perform inverse mapping or return plain numpy array
+        features        a list of pairs. The first element is the pandas column
+                        selector. This can be a string (for one column) or a list
+                        of strings. The second element is an object that supports
+                        sklearn's transform interface.
+
+        return_df       perform inverse mapping or return plain numpy array
+
+        rest_unchanged  if column wasn't mentioned in self.features, it remains unchanged in resulting dataset,
+                        if False - being deleted.
         """
         self.features = features
         self.return_df = return_df
+        self.rest_unchanged = rest_unchanged
 
 
     def _get_col_subset(self, X, cols):
@@ -40,6 +66,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         if isinstance(cols, six.string_types):
             cols = [cols]
+        if type(cols) != list:
+            cols = list(cols)
 
         return X[cols]
 
@@ -52,6 +80,17 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         if not hasattr(X, 'index'):
             raise ValueError('X is not a DataFrame or Series. DataFrameMapper can operate only on Pandas objects.')
+
+        if self.rest_unchanged:
+            features_to_change = []
+            for columns, _ in self.features:
+                if type(columns) in [list, tuple]:
+                    features_to_change.extend(columns)
+                else:
+                    features_to_change.append(columns)
+            rest_features = set(X.columns) - set(features_to_change)
+            for feature in rest_features:
+                self.features.append((feature, None))
 
         for columns, transformer in self.features:
             if transformer is not None:
@@ -91,19 +130,27 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
             # TODO - add possibility for columns = list
             if self.return_df:
-                if isinstance(columns, list):
-                    raise NotImplementedError('return_df=True will not work right with features as list.')
+                if transformer is not None:
+                    if isinstance(columns, list):
+                        raise NotImplementedError('return_df=True will not work right with features as list.')
 
-                original_feature_name = columns
-                new_features = []
-                for i in range(transformed_subset.shape[1]):
-                    new_features.append('{fname}_{transformation}_{idx}'.format(fname=original_feature_name,
-                                                                                transformation=transformer.__class__.__name__,
-                                                                                idx=i))
+                    original_feature_name = columns
+                    new_features = []
 
-                transformed_subset = pd.DataFrame(transformed_subset,
-                                                  index=X.index,
-                                                  columns=new_features)
+                    if transformed_subset.shape[1] == 1:
+                        new_features.append('{fname}_{transformation}'
+                                            .format(fname=original_feature_name,
+                                                    transformation=transformer.__class__.__name__, ))
+                    else:
+                        for i in range(transformed_subset.shape[1]):
+                            new_features.append('{fname}_{transformation}_{idx}'
+                                                .format(fname=original_feature_name,
+                                                        transformation=transformer.__class__.__name__,
+                                                        idx=i))
+
+                    transformed_subset = pd.DataFrame(transformed_subset,
+                                                      index=X.index,
+                                                      columns=new_features)
 
             sub_dfs.append(transformed_subset)
 
