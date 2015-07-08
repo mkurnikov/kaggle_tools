@@ -9,6 +9,7 @@ import collections
 
 
 class DataFrameTransformer(BaseEstimator, TransformerMixin):
+
     def __init__(self, transformer=None):
         if transformer is None:
             raise ValueError('Transformer has to be provided, in order this to work.')
@@ -18,6 +19,14 @@ class DataFrameTransformer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         self.transformer.fit(X, y)
         return self
+
+
+    def set_params(self, **params):
+        self.transformer.set_params(**params)
+
+
+    def get_params(self, deep=True):
+        return self.transformer.get_params(deep)
 
 
     def transform(self, X):

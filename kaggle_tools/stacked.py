@@ -12,6 +12,8 @@ class BaseStackedEstimator(BaseEstimator):
 
 
 class StackedClassifier(BaseStackedEstimator, ClassifierMixin):
+    #VotingClassifier satisfy.
+
     # TODO - majorite vote for prediction
     # TODO - calibration
     # TODO - average(or some other metric) for predict_proba

@@ -29,7 +29,7 @@ def distance_matrix(data, distance='euclidean'):
         dist_matrix = np.ndarray((data.shape[0], data.shape[0]), np.float64)
         for i in range(dist_matrix.shape[0]):
             for j in range(dist_matrix.shape[1]):
-                distance_matrix[i, j] = nan_tolerant_euclidean(data[i, :], data[j, :])
+                dist_matrix[i, j] = nan_tolerant_euclidean(data[i, :], data[j, :])
         return dist_matrix
     raise NotImplementedError
 

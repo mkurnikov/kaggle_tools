@@ -30,7 +30,7 @@ class LeavePSubjectsOutKFold(_PartitionIterator):
         for fold in range(self.n_folds):
             subject_subset_idx = sample_without_replacement(n_population=self.n_unique_subjects,
                                        n_samples=self.p,
-                                       random_state=self.random_state.randint(MAX_SEED),
+                                       random_state=self.random_state.randint(0, MAX_SEED),
                                        method='auto')
             test_mask = np.in1d(self.subj_indices, subject_subset_idx)
             yield test_mask
