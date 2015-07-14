@@ -1,4 +1,4 @@
-from __future__ import division, print_function, unicode_literals
+from __future__ import division, print_function
 
 from collections import Sized
 from collections import namedtuple
@@ -44,6 +44,7 @@ class MyGridSearchCV(GridSearchCV):
             estimator, param_grid, scoring, fit_params, n_jobs, iid,
             False, cv, verbose, pre_dispatch, error_score)
         self.best_ = None
+
 
 
     def _fit(self, X, y, parameter_iterable):
@@ -153,4 +154,4 @@ def my_cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     if return_train_score:
         return np.array(scores)[:, [0, 1]]
     else:
-        return np.array(scores)[:, [0]]
+        return np.array(scores)[:, [1]]

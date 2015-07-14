@@ -1,8 +1,9 @@
-from __future__ import division, absolute_import, print_function, unicode_literals
+from __future__ import division, print_function
 
 from sklearn.learning_curve import learning_curve
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 
 def show_feature_importances(estimator, feature_names=None):
@@ -60,10 +61,13 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
     plt.title(title)
     if ylim is not None:
         plt.ylim(*ylim)
-    plt.xlabel("Training examples")
-    plt.ylabel("Score")
+
+    plt.xlabel('Training examples')
+    plt.ylabel('Score')
+
     train_sizes, train_scores, test_scores = learning_curve(
         estimator, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
+
     train_scores_mean = np.mean(train_scores, axis=1)
     train_scores_std = np.std(train_scores, axis=1)
     test_scores_mean = np.mean(test_scores, axis=1)
@@ -72,13 +76,81 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
 
     plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
                      train_scores_mean + train_scores_std, alpha=0.1,
-                     color="r")
+                     color='r')
     plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
-                     test_scores_mean + test_scores_std, alpha=0.1, color="g")
-    plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
-             label="Training score")
-    plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
-             label="Cross-validation score")
+                     test_scores_mean + test_scores_std, alpha=0.1, color='g')
+    plt.plot(train_sizes, train_scores_mean, 'o-', color='r',
+             label='Training score')
+    plt.plot(train_sizes, test_scores_mean, 'o-', color='g',
+             label='Cross-validation score')
 
-    plt.legend(loc="best")
+    plt.legend(loc='best')
     return plt
+
+
+def plot_train_test_error(param_name, param_grid, grid_search_,
+                          more_is_better=False, show_train_error=True):
+    train_errors = []
+    train_error_stds = []
+    test_errors = []
+    test_error_stds = []
+    for cv_scores in grid_search_.grid_scores_:
+        # print(cv_scores)
+        params_, mean_score, scores, train_score, train_scores = cv_scores
+        # print scores
+        # estimators_pipeline.set_params(**params_)
+        # estimators_pipeline.fit(dataset, target)
+        # train_error = 1 - accuracy_score(target, estimators_pipeline.predict(dataset))
+        # print('train error:', 1 - train_score)
+        if not more_is_better:
+            train_errors.append(1 - train_score)
+            train_error_stds.append(train_scores.std() / 2)
+
+            print("%0.8f (+/-%0.05f) for %r"
+              % (mean_score, scores.std(), params_))
+            test_errors.append(1 - mean_score)
+            test_error_stds.append(scores.std() / 2)
+        else:
+            train_errors.append(train_score)
+            train_error_stds.append(train_scores.std() / 2)
+
+            print("%0.8f (+/-%0.05f) for %r"
+              % (mean_score, scores.std(), params_))
+            test_errors.append(mean_score)
+            test_error_stds.append(scores.std() / 2)
+
+    errors = pd.DataFrame(data={
+        # 'C': params['forest__n_estimators'],
+        'param': param_grid[param_name],
+        # 'param': params['forest__max_features'],
+        # 'param' : params['boosting__n_estimators'],
+        # 'param' : params['boosting__max_depth'],
+        # 'param' : params['boosting__learning_rate'],
+        'train_error': train_errors,
+        'train_error_std': train_error_stds,
+        'test_error': test_errors,
+        'test_error_std': test_error_stds
+    })
+
+    fig = plt.figure()
+    if show_train_error:
+        plt.plot(errors['param'], errors['train_error'], 'k-', label='train_error', linewidth=2)
+        plt.plot(errors['param'], errors['train_error'], 'k.', markersize=12)
+
+    plt.plot(errors['param'], errors['test_error'], 'r-', label='test_error', linewidth=2)
+
+    ax = fig.gca()  # get current axis
+    ax.errorbar(errors['param'], errors['test_error'], fmt='r.', markersize=12, yerr=errors['test_error_std'])
+
+    plt.plot(errors['param'], errors['test_error'], 'r.', markersize=12)
+    plt.xlabel(param_name)
+    plt.ylabel('error')
+    # plt.xlim(1, 12)
+    plt.title('Train/test error plots')
+    plt.legend(loc='best')
+
+    # best_mean, best_std = grid_search_.best_.mean_validation_score, np.std(grid_search_.best_.cv_validation_scores) / 2
+    # bottom = 1 - (best_mean + best_std)
+    # height = best_std * 2
+    # plt.barh(bottom, ax.xmax, height=height, color='red', alpha=0.2)
+    return fig, ax

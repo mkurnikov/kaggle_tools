@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import, print_function, unicode_literals
+from __future__ import division, print_function
 
 import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin
@@ -96,7 +96,10 @@ class StackedRegressor(BaseStackedEstimator, RegressorMixin):
 
         predictions = np.zeros((X.shape[0], len(self.estimators)), dtype=np.float32)
         for i, estimator in enumerate(self.estimators):
-            predictions[:, i] = self._predict_local(estimator, X)
+            prediction = self._predict_local(estimator, X)
+            if len(prediction.shape) == 2:
+                prediction = prediction.reshape((prediction.shape[0],))
+            predictions[:, i] = prediction
 
         return np.average(predictions, axis=1, weights=self.weights)
 

@@ -1,4 +1,4 @@
-from __future__ import division, print_function, unicode_literals
+from __future__ import division, print_function
 
 import pandas as pd
 import numpy as np
@@ -33,6 +33,7 @@ class StringToInt(BaseEstimator, TransformerMixin):
     def transform(self, X):
         X = check_array(X, copy=True, dtype=None, force_all_finite=False, ensure_2d=True)
 
+        n_samples = X.shape[0]
         # it can process np.nan as a separate value out of box.
         unique_vals, X_integers = np.unique(X, return_inverse=True)
         nan_value = -1
@@ -45,4 +46,4 @@ class StringToInt(BaseEstimator, TransformerMixin):
         if self.nan_strategy == 'mask':
             X_integers[X_integers == nan_value] = np.nan
 
-        return X_integers
+        return X_integers.reshape((n_samples, 1))

@@ -1,4 +1,4 @@
-from __future__ import division, print_function, unicode_literals
+from __future__ import division, print_function
 
 import numpy as np
 import pandas as pd
@@ -44,7 +44,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
 
 
-    def __init__(self, features, return_df=True, rest_unchanged=True):
+    def  __init__(self, features, return_df=True, rest_unchanged=True):
         """
         Params:
 
@@ -58,7 +58,14 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         rest_unchanged  if column wasn't mentioned in self.features, it remains unchanged in resulting dataset,
                         if False - being deleted.
         """
-        self.features = features
+        input_ = []
+        for feature in features:
+            if len(feature) != 3:
+                input_.append((feature[0], None, feature[1]))
+            else:
+                input_.append(feature)
+
+        self.features = input_
         self.return_df = return_df
         self.rest_unchanged = rest_unchanged
 
@@ -92,16 +99,16 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         if self.rest_unchanged:
             features_to_change = []
-            for columns, _ in self.features:
+            for columns, _, _ in self.features:
                 if type(columns) in [list, tuple]:
                     features_to_change.extend(columns)
                 else:
                     features_to_change.append(columns)
             rest_features = set(X.columns) - set(features_to_change)
             for feature in rest_features:
-                self.features.append((feature, None))
+                self.features.append((feature, None, None))
 
-        for columns, transformer in self.features:
+        for columns, _, transformer in self.features:
             if transformer is not None:
                 transformer.fit(self._get_col_subset(X, columns))
         return self
@@ -118,7 +125,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             return X
 
         sub_dfs = []
-        for columns, transformer in self.features:
+        for columns, prefix, transformer in self.features:
             # columns could be a string or list of
             # strings; we don't care because pandas
             # will handle either.
@@ -146,16 +153,42 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     original_feature_name = columns
                     new_features = []
 
-                    if transformed_subset.shape[1] == 1:
-                        new_features.append('{fname}_{transformation}'
-                                            .format(fname=original_feature_name,
-                                                    transformation=transformer.__class__.__name__, ))
-                    else:
-                        for i in range(transformed_subset.shape[1]):
-                            new_features.append('{fname}_{transformation}_{idx}'
+                    if prefix is None:
+                        if transformed_subset.shape[1] == 1:
+                            new_features.append('{fname}_{transformation}'
                                                 .format(fname=original_feature_name,
-                                                        transformation=transformer.__class__.__name__,
-                                                        idx=i))
+                                                        transformation=transformer.__class__.__name__, ))
+                        else:
+                            for i in range(transformed_subset.shape[1]):
+                                new_features.append('{fname}_{transformation}_{idx}'
+                                                    .format(fname=original_feature_name,
+                                                            transformation=transformer.__class__.__name__,
+                                                            idx=i))
+                    else:
+                        if prefix == '':
+                            if transformed_subset.shape[1] == 1:
+                                new_features.append('{fname}'
+                                                    .format(fname=original_feature_name))
+                            else:
+                                for i in range(transformed_subset.shape[1]):
+                                    new_features.append('{fname}_{idx}'
+                                                        .format(fname=original_feature_name,
+                                                                # transformation=transformer.__class__.__name__,
+                                                                idx=i))
+                        else:
+                            if transformed_subset.shape[1] == 1:
+                                new_features.append('{fname}_{prefix}'
+                                                    .format(fname=original_feature_name,
+                                                            prefix=prefix))
+                            else:
+                                for i in range(transformed_subset.shape[1]):
+                                    new_features.append('{fname}_{prefix}_{idx}'
+                                                        .format(fname=original_feature_name,
+                                                                prefix=prefix,
+                                                                idx=i))
+
+
+
 
                     transformed_subset = pd.DataFrame(transformed_subset,
                                                       index=X.index,

@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import, print_function, unicode_literals
+from __future__ import division, print_function
 
 import itertools
 import six
@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.base import BaseEstimator, clone
 from sklearn.cross_validation import cross_val_score
 from sklearn.utils.validation import check_X_y, NotFittedError
+from sklearn.feature_selection.rfe import RFE
 
 
 # TODO - implement sebastian rachka ipython notebook here
