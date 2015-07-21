@@ -3,10 +3,12 @@ from __future__ import division, print_function
 from itertools import combinations
 import sys
 import numpy as np
+import pandas as pd
 from scipy import sparse
 
 from sklearn.utils import deprecated
 from sklearn.base import BaseEstimator, TransformerMixin
+
 
 class FeatureColumnsExtractor(BaseEstimator, TransformerMixin):
     def __init__(self, columns=None):

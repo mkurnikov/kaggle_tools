@@ -127,6 +127,7 @@ class MyGridSearchCV(GridSearchCV):
         self.best_params_ = self.best_.parameters
         self.best_score_ = self.best_.mean_validation_score
 
+
     def get_best_one_std(self, std_coeff=1.0):
         if self.best_ is None:
             self.best_ = sorted(self.grid_scores_, key=lambda x: x.mean_validation_score,

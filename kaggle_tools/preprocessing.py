@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import warnings
 from sklearn.utils.validation import check_array
+from sklearn.utils import deprecated
 
 from kaggle_tools.base import BaseEstimator, TransformerMixin
 
@@ -46,4 +47,4 @@ class StringToInt(BaseEstimator, TransformerMixin):
         if self.nan_strategy == 'mask':
             X_integers[X_integers == nan_value] = np.nan
 
-        return X_integers.reshape((n_samples, 1))
+        return X_integers#.reshape((n_samples, 1))

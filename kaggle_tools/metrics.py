@@ -11,3 +11,32 @@ def rmlse(predictions, actual):
     log_differences_squared = (np.log(predictions + 1) - np.log(actual + 1)) ** 2
 
     return np.sqrt(log_differences_squared.mean())
+
+
+def normalized_gini(y_true, y_pred):
+    # check and get number of samples
+    #
+    # y_true **= 2
+
+    y_pred = y_pred.reshape(y_true.shape)
+    # print(y_true.shape, y_pred.shape)
+    assert y_true.shape == y_pred.shape
+    n_samples = y_true.shape[0]
+
+    # sort rows on prediction column
+    # (from largest to smallest)
+    arr = np.array([y_true, y_pred]).transpose()
+    true_order = arr[arr[:, 0].argsort()][::-1, 0]
+    pred_order = arr[arr[:, 1].argsort()][::-1, 0]
+
+    # get Lorenz curves
+    L_true = np.cumsum(true_order) / np.sum(true_order)
+    L_pred = np.cumsum(pred_order) / np.sum(pred_order)
+    L_ones = np.linspace(0, 1, n_samples)
+
+    # get Gini coefficients (area between curves)
+    G_true = np.sum(L_ones - L_true)
+    G_pred = np.sum(L_ones - L_pred)
+
+    # normalize to true Gini coefficient
+    return G_pred / G_true

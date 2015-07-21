@@ -88,8 +88,18 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
     return plt
 
 
+def pprint_grid_scores(grid_scores, sorted_by_mean_score=True):
+    if sorted_by_mean_score:
+        grid_scores = sorted(grid_scores, key=lambda x: x.mean_validation_score)
+    for cv_scores in grid_scores:
+        params_, mean_score, scores, _, _ = cv_scores
+        print('%0.8f (+/-%0.05f) for %r'
+              % (mean_score, scores.std(), params_))
+
+
 def plot_train_test_error(param_name, param_grid, grid_search_,
-                          more_is_better=False, show_train_error=True):
+                          more_is_better=False, show_train_error=True,
+                          print_grid_scores=False):
     train_errors = []
     train_error_stds = []
     test_errors = []
@@ -106,18 +116,17 @@ def plot_train_test_error(param_name, param_grid, grid_search_,
             train_errors.append(1 - train_score)
             train_error_stds.append(train_scores.std() / 2)
 
-            print("%0.8f (+/-%0.05f) for %r"
-              % (mean_score, scores.std(), params_))
             test_errors.append(1 - mean_score)
             test_error_stds.append(scores.std() / 2)
         else:
             train_errors.append(train_score)
             train_error_stds.append(train_scores.std() / 2)
 
-            print("%0.8f (+/-%0.05f) for %r"
-              % (mean_score, scores.std(), params_))
             test_errors.append(mean_score)
             test_error_stds.append(scores.std() / 2)
+
+    if print_grid_scores:
+        pprint_grid_scores(grid_search_.grid_scores_)
 
     errors = pd.DataFrame(data={
         # 'C': params['forest__n_estimators'],

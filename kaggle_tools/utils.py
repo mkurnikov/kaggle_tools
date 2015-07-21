@@ -34,7 +34,20 @@ def distance_matrix(data, distance='euclidean'):
     raise NotImplementedError
 
 
-def pprint_cross_val_scores(scores):
+def _get_pprinted_mean(mean):
+    return '{:0.8f}'.format(mean)
+
+def _get_pprinted_std(std):
+    return '(+/-{:0.05f})'.format(std)
+
+
+def _get_pprinted_cross_val_scores(scores):
     if type(scores) == list:
         scores = np.array(scores)
-    print("%0.8f (+/-%0.05f)" % (scores.mean(), scores.std()))
+    msg = '{mean} {std}'.format(mean=_get_pprinted_mean(scores.mean()),
+                                std=_get_pprinted_std(scores.std()))
+    return msg
+
+
+def pprint_cross_val_scores(scores):
+    print(_get_pprinted_cross_val_scores(scores))
