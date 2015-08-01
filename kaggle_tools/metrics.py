@@ -12,12 +12,29 @@ def rmlse(predictions, actual):
 
     return np.sqrt(log_differences_squared.mean())
 
+import xgboost as xgb
+
+def xgb_normalized_gini(y_pred, y_true):
+    if isinstance(y_pred, xgb.DMatrix):
+        y_pred = y_pred.get_label()
+
+    if isinstance(y_true, xgb.DMatrix):
+        y_true = y_true.get_label()
+
+    # print(y_pred.shape, y_true.shape)
+    return 'gini', 1 - normalized_gini(y_true, y_pred)
+    # print(y_pred)
+    # print(y_true)
+    # raise SystemExit(1)
 
 def normalized_gini(y_true, y_pred):
     # check and get number of samples
     #
     # y_true **= 2
 
+    # if isinstance(y_pred, xgb.DMatrix):
+    #     print(y_pred.__dict__)
+    #     y_pred = y_pred.data
     y_pred = y_pred.reshape(y_true.shape)
     # print(y_true.shape, y_pred.shape)
     assert y_true.shape == y_pred.shape

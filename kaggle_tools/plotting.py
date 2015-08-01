@@ -14,7 +14,7 @@ def show_feature_importances(estimator, feature_names=None):
         raise AttributeError('Estimator {} doesn\'t support feature importances'.format(estimator))
 
     importances = estimator.feature_importances_
-    feature_importance = 100.0 * (importances / importances.max())
+    feature_importance = (importances / importances.max()) * 100.0
     sorted_idx = np.argsort(feature_importance)
     pos = np.arange(sorted_idx.shape[0]) + .5
     plt.barh(pos, feature_importance[sorted_idx], align='center')

@@ -1,13 +1,24 @@
-from __future__ import division, print_function
+from __future__ import division, print_function, \
+    unicode_literals, absolute_import
 # noinspection PyUnresolvedReferences
 from py3compatibility import *
 
+from collections import Sized, namedtuple
 import numpy as np
-from collections import namedtuple
-from collections import Iterable
 from numbers import Number
-from kaggle_tools.utils import _get_pprinted_cross_val_scores, _get_pprinted_mean, _get_pprinted_std
-from kaggle_tools.tools_logging import SklearnToMongo, _get_array_hash
+from sklearn.base import clone, is_classifier
+from sklearn.cross_validation import _fit_and_score
+from sklearn.utils.validation import _num_samples
+from sklearn.utils.validation import indexable
+from sklearn.cross_validation import check_cv, check_scoring
+from sklearn.externals.joblib import Parallel, delayed, logger
+from sklearn.grid_search import GridSearchCV
+
+# from kaggle_tools.base import is_classifier, clone
+from kaggle_tools.utils.misc_utils import _get_array_hash
+from kaggle_tools.utils.misc_utils import pprint_cross_val_scores, \
+    _get_pprinted_cross_val_scores, _get_pprinted_mean
+
 
 class _CVTrainTestScoreTuple(namedtuple('_CVTrainTestScoreTuple',
                                         ('parameters',
@@ -23,11 +34,13 @@ class _CVTrainTestScoreTuple(namedtuple('_CVTrainTestScoreTuple',
             np.std(self.cv_validation_scores),
             self.parameters)
 
-from sklearn.base import clone
+
 class CVResult(object):
     def __init__(self, estimator, X, y, cv, custom_est_params=None, scores=None, scorer=None):
         self.estimator = clone(estimator)
-        self.estimator.set_params(**custom_est_params)
+        if custom_est_params is not None:
+            self.estimator.set_params(**custom_est_params)
+        # if self.estimator.get_params().
         self.X = X
         self.y = y
         self.custom_est_params = custom_est_params
@@ -41,53 +54,24 @@ class CVResult(object):
         else:
             raise ValueError
 
+
     def __repr__(self):
-        if self.score_type == 'array':
-            train_score = _get_pprinted_cross_val_scores(self.scores[:, [0]].flatten())
-            test_score = _get_pprinted_cross_val_scores(self.scores[:, [1]].flatten())
-
-        elif self.score_type == 'number':
-            score = _get_pprinted_mean(self.scores)
-
-        else:
-            raise ValueError
-
         msg = ''
         msg += str(self.estimator) + '\n'
         msg += str((self.X.shape, self.y.shape)) + '\n'
         msg += str(self.custom_est_params) + '\n'
         msg += str(self.cv) + '\n'
+
         if self.score_type == 'array':
+            train_score = _get_pprinted_cross_val_scores(self.scores[:, [0]].flatten())
+            test_score = _get_pprinted_cross_val_scores(self.scores[:, [1]].flatten())
             msg += str((train_score, test_score))
-        else:
-            msg += str(score)
-        return msg
 
-
-    def to_mongo_repr(self):
-        scores = None
-        if self.score_type == 'array':
-            scores = {
-                'score_type': 'array',
-                'train_scores': SklearnToMongo(self.scores[:, [0]].flatten()),
-                'test_scores': SklearnToMongo(self.scores[:, [1]].flatten())
-            }
         elif self.score_type == 'number':
-            scores = {
-                'score_type': 'number',
-                'score': SklearnToMongo(self.scores)
-            }
+            score = _get_pprinted_mean(self.scores)
+            msg += str(score)
 
-        data = {
-            'X': _get_array_hash(self.X),
-            'y': _get_array_hash(self.y)
-        }
-        json_obj = {
-            'estimator': SklearnToMongo(self.estimator),
-            'data': data,
-            'cv': SklearnToMongo(self.cv),
-            'scores': scores,
-            'custom_params': self.custom_est_params,
-            'scorer': SklearnToMongo(self.scorer)
-        }
-        return json_obj
+        else:
+            raise ValueError
+
+        return msg
