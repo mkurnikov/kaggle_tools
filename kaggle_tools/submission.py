@@ -13,8 +13,8 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.base import clone
 
 from kaggle_tools.cross_validation import my_cross_val_score
-from kaggle_tools.utils import pprint_cross_val_scores
-from kaggle_tools.tools_logging import MongoUtils
+from kaggle_tools.utils.misc_utils import pprint_cross_val_scores
+from kaggle_tools.utils.mongo_utils import MongoSerializer, MongoCollectionWrapper
 
 
 class BaseSubmittion(six.with_metaclass(ABCMeta)):
@@ -37,13 +37,6 @@ class BaseSubmittion(six.with_metaclass(ABCMeta)):
         self.is_fitted = False
         self.original_test_set = None
 
-    #
-    # @abstractmethod
-    # def get_target(self, dataset):
-    #     """Logic for retrieving target out of train dataset.
-    #     """
-    #     pass
-
 
     def fit(self, X, y, perform_cv=True, scoring=None, n_jobs=1, verbose=0):
         if perform_cv:
@@ -58,7 +51,7 @@ class BaseSubmittion(six.with_metaclass(ABCMeta)):
 
         self.pipeline.fit(X, y)
         self.is_fitted = True
-        print('fitted. time:', time.time() - before)
+        print('full data fitted. time:', time.time() - before)
 
 
     def predict(self, X):
@@ -74,26 +67,30 @@ class BaseSubmittion(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def create_submission(self, predictions, original_test_set, submission_file):
+        """ Filesystem logic to save submission to file.
+        """
         pass
-
-
-    # def predict_and_create_submission(self, X, submission_file):
-    #     predictions = self._predict(X)
-    #     self._create_submission(predictions, self.original_test_set, submission_file)
 
 
     @abstractproperty
     def project_submission_id_(self):
+        """ID for specific type of submissions. Like __class__.__name__.
+        In case of different types of base submissions in project.
+        """
         pass
 
 
     @abstractproperty
     def serialized_models_directory_(self):
+        """Directory for pickled models.
+        """
         pass
 
 
     @abstractproperty
     def submission_mongo_collection_(self):
+        """Specify which collection should be used to save results.
+        """
         pass
 
 
@@ -101,10 +98,7 @@ class BaseSubmittion(six.with_metaclass(ABCMeta)):
         if not self.is_fitted:
             raise ValueError('Pipeline is not fitted.')
 
-        # self.submission_score = input('Enter submission score [default="{}"]: '
-        #                               .format(self.submission_id))
         self.submission_score = input('Enter submission score: ')
-
 
         if serialize_fitted_pipeline:
             dest_path = os.path.join(self.serialized_models_directory_, self.submission_id) + '.pkl'
@@ -113,19 +107,14 @@ class BaseSubmittion(six.with_metaclass(ABCMeta)):
 
             print('Model has been pickled to {}'.format(dest_path))
 
-        json_obj = {
-            'project_submission_id': self.project_submission_id_,
-            'specific_submission_id': self.submission_id,
-            'pipeline': MongoUtils.toJSON(self.pipeline),
-            'cv_scores': MongoUtils.toJSON(self.cv_scores),
-            'submission_score': self.submission_score
-        }
-
+        serializer = MongoSerializer()
         if show_json:
             import json
+            json_obj = serializer.serialize(self)
             print(json.dumps(json_obj, indent=2, sort_keys=True))
 
-        self.submission_mongo_collection_.insert_one(json_obj)
+        collection_wrapper = MongoCollectionWrapper(serializer, self.submission_mongo_collection_)
+        collection_wrapper.insert_submission(self)
 
 
     def perform_cv(self, X, y, scoring, n_jobs=1, verbose=0):
@@ -137,6 +126,10 @@ class BaseSubmittion(six.with_metaclass(ABCMeta)):
 
         self.cv_scores = scores
 
+
+    @property
+    def json_(self):
+        return MongoSerializer()._submission(self)
 
 
 

@@ -3,7 +3,7 @@ from __future__ import division, print_function, \
 # noinspection PyUnresolvedReferences
 from py3compatibility import *
 
-from kaggle_tools.grid_search import MyGridSearchCV
+from kaggle_tools.grid_search._grid_search import MyGridSearchCV
 
 
 def main():
@@ -20,12 +20,12 @@ def main():
 
     from sklearn.linear_model import Ridge
     clf = Ridge()
-    from kaggle_tools.utils.logging_utils import MongoSerializer, MongoCollectionWrapper
+    from kaggle_tools.utils.mongo_utils import MongoSerializer, MongoCollectionWrapper
     serializer = MongoSerializer()
     collection_wrapper = MongoCollectionWrapper(serializer, collection)
 
-    grid_search = MyGridSearchCV(clf, {'alpha': [0.1, 0.01]}, cv=cv,
-                                 mongo_collection_wrapper=collection_wrapper, verbose=1)
+    grid_search = MyGridSearchCV(clf, {'alpha': [0.1, 0.01, 0.001]}, cv=cv,
+                                 verbose=3)
     grid_search.fit(X, y)
 
     print(grid_search.grid_scores_)

@@ -6,7 +6,7 @@ import warnings
 from sklearn.utils.validation import check_array
 from sklearn.utils import deprecated
 
-from kaggle_tools.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin
 
 
 class StringToInt(BaseEstimator, TransformerMixin):

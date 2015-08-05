@@ -2,7 +2,7 @@ from __future__ import division, print_function
 
 import numpy as np
 import pandas as pd
-from kaggle_tools.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 import six
 import collections

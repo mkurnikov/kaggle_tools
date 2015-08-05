@@ -3,8 +3,10 @@ from __future__ import division, print_function, \
 # noinspection PyUnresolvedReferences
 from py3compatibility import *
 
+import json
 import numpy as np
 import inspect
+from copy import deepcopy
 from collections import Callable
 
 from sklearn.base import BaseEstimator, clone
@@ -13,6 +15,22 @@ from sklearn.cross_validation import _PartitionIterator
 
 from kaggle_tools.grid_search import CVResult
 from kaggle_tools.utils import misc_utils
+
+from kaggle_tools.utils import pipeline_utils
+
+
+def _path_from_prefix(estimator, prefix):
+    prefixes = prefix.split('__')
+    path = ''
+    for prefix in prefixes:
+        if isinstance(estimator, Pipeline):
+            for i, (name, step) in enumerate(estimator.steps):
+                if name == prefix:
+                    path += 'steps' + '.'
+                    path += str(i) + '.'
+                    path += name + '.'
+                    estimator = step
+    return path
 
 
 class MongoSerializer(object):
@@ -25,9 +43,18 @@ class MongoSerializer(object):
         self.ignored_fields = set(ignored_fields)
 
 
+    def add_ignored_field(self, field):
+        self.ignored_fields.add(field)
+
+
     def serialize(self, obj):
         if isinstance(obj, Pipeline):
             return self._pipeline(obj)
+
+        # elif isinstance(obj, BaseSubmittion):
+        #     return self._submission(obj)
+        elif hasattr(obj, 'json_'):
+            return obj.json_
 
         elif isinstance(obj, CVResult):
             return self._cv_result_object(obj)
@@ -55,6 +82,17 @@ class MongoSerializer(object):
 
         else:
             return obj
+
+
+    def _submission(self, submission_obj):
+        json_obj = {
+            'project_submission_id': submission_obj.project_submission_id_,
+            'specific_submission_id': submission_obj.submission_id,
+            'pipeline': self.serialize(submission_obj.pipeline),
+            'cv_scores': self.serialize(submission_obj.cv_scores),
+            'submission_score': submission_obj.submission_score
+        }
+        return json_obj
 
 
     def _pipeline(self, pipeline):
@@ -198,7 +236,14 @@ class MongoCollectionWrapper(object):
 
 
     def insert_cv_result(self, cv_result):
-        self.collection.insert_one(self.serializer.serialize(cv_result))
+        json_cv_result = self.serializer.serialize(cv_result)
+        # print(json.dumps(json_cv_result, indent=2))
+        # raise SystemExit(1)
+        self.collection.insert_one(json_cv_result)
+
+
+    def insert_submission(self, submission):
+        self.collection.insert_one(self.serializer.serialize(submission))
 
 
     def check_presence_in_mongo_collection(self, estimator, X, y, cv,
@@ -208,6 +253,7 @@ class MongoCollectionWrapper(object):
             'y': misc_utils._get_array_hash(y)
         }
 
+
         cv = self.serializer.serialize(cv)
         estimator = clone(estimator)
         estimator.set_params(**params)
@@ -216,7 +262,7 @@ class MongoCollectionWrapper(object):
             'estimator': estimator,
             'cv': cv,
             'data': data,
-            'scorer': self.serializer.serialize(scorer)
+            'scorer': self.serializer.serialize(scorer),
         }
         entry = self.collection.find_one(cv_config_json_obj)
         return entry
@@ -228,22 +274,47 @@ class MongoCollectionWrapper(object):
             'X': misc_utils._get_array_hash(X),
             'y': misc_utils._get_array_hash(y)
         }
+        serializer = deepcopy(self.serializer)
+        # serializer.add_ignored_field('n_estimators')
 
-        cv = self.serializer.serialize(cv)
+        cv = serializer.serialize(cv)
+
         estimator = clone(estimator)
         estimator.set_params(**params)
-        estimator = self.serializer.serialize(estimator)
-        print(estimator)
+        # estimator_json = serializer.serialize(estimator)
+        # print(estimator)
+        est_params = serializer.serialize(pipeline_utils.get_final_estimator(estimator).get_params())
+        n_ests_key = None
+        for p in est_params:
+            if 'n_estimators' in p:
+                n_ests_key = p
+        if n_ests_key is not None:
+            del est_params[n_ests_key]
+
+        est_name = serializer.serialize(pipeline_utils.get_final_estimator(estimator).__class__.__name__)
+
+        prefix = pipeline_utils.find_xgbmodel_param_prefix(estimator)[0]
+        # print(prefix)
+        est_path = _path_from_prefix(estimator, prefix)
+        # print(est_path)
+
+        est_params_json = {}
+        for est_param in est_params:
+            est_params_json['estimator.' + est_path + 'params.' + est_param] = est_params[est_param]
+            # 'estimator.' + est_path + 'params': est_params,
         cv_config_json_obj = {
-            'estimator': estimator,
+            # 'estimator': estimator,
+            'estimator.' + est_path + 'name': est_name,
             'cv': cv,
             'data': data,
-            'scorer': self.serializer.serialize(scorer)
+            'scorer': serializer.serialize(scorer),
         }
+        cv_config_json_obj.update(est_params_json)
+        # print(json.dumps(cv_config_json_obj, indent=2))
         entry = self.collection.find_one(cv_config_json_obj)
         return entry
 
 
 if __name__ == '__main__':
-    from kaggle_tools.utils.tests import tests_logging_utils
-    tests_logging_utils.main()
+    from kaggle_tools.utils.tests import tests_mongo_utils
+    tests_mongo_utils.main()

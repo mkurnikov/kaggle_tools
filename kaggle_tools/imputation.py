@@ -2,8 +2,8 @@ from __future__ import division, print_function
 
 import numpy as np
 
-from kaggle_tools.utils import nan_tolerant_mean, distance_matrix
-from kaggle_tools.base import TransformerMixin, BaseEstimator
+from kaggle_tools.utils.numeric_utils import nan_tolerant_mean, distance_matrix
+from sklearn.base import TransformerMixin, BaseEstimator
 
 class ClusteringImputer(BaseEstimator, TransformerMixin):
     #TODO: imputer doesn't work correctly.

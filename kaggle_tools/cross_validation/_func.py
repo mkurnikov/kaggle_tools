@@ -1,4 +1,7 @@
-from __future__ import division, print_function
+from __future__ import division, print_function, \
+    unicode_literals, absolute_import
+# noinspection PyUnresolvedReferences
+from py3compatibility import *
 
 import numpy as np
 from sklearn.cross_validation import _fit_and_score
@@ -6,26 +9,9 @@ from sklearn.utils.validation import indexable
 from sklearn.cross_validation import check_cv, check_scoring
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.cross_validation import _fit_and_predict
+from sklearn.base import is_classifier, clone
 
 from kaggle_tools.grid_search import CVResult
-from kaggle_tools.base import is_classifier, clone
-# def my_cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-#                     verbose=0, fit_params=None, pre_dispatch='2*n_jobs', return_train_score=False):
-#     X, y = indexable(X, y)
-#
-#     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-#     scorer = check_scoring(estimator, scoring=scoring)
-#     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
-#                         pre_dispatch=pre_dispatch)
-#     scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
-#                                           train, test, verbose, None,
-#                                           fit_params, return_train_score=True)
-#                   for train, test in cv)
-#
-#     if return_train_score:
-#         return np.array(scores)[:, [0, 1]]
-#     else:
-#         return np.array(scores)[:, [1]]
 
 
 def my_cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,

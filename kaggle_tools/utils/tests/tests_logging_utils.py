@@ -8,7 +8,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.cross_validation import KFold
 from xgboost import XGBRegressor
 
-from kaggle_tools.utils.logging_utils import MongoCollectionWrapper, MongoSerializer
+from kaggle_tools.utils.mongo_utils import MongoCollectionWrapper, MongoSerializer
 
 
 def main():
