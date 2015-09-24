@@ -3,6 +3,4 @@ from __future__ import division, print_function, \
 # noinspection PyUnresolvedReferences
 from py3compatibility import *
 
-from kaggle_tools.cross_validation._score import my_cross_val_score
 
-from kaggle_tools.cross_validation._iterators import RepeatedKFold

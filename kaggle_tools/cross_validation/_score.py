@@ -12,6 +12,7 @@ from sklearn.cross_validation import _fit_and_predict
 from sklearn.base import is_classifier, clone
 
 from kaggle_tools.grid_search import CVResult
+from kaggle_tools.utils import logging_utils
 
 
 def my_cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
@@ -20,6 +21,7 @@ def my_cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     X, y = indexable(X, y)
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
+
 
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
@@ -32,7 +34,10 @@ def my_cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         cv_result = CVResult(estimator, X, y, cv, scores=(np.array(scores)[:, [0]],
                                                           np.array(scores)[:, [1]]))
         if logger is not None:
-            logger.info(cv_result)
+            message = str(cv_result)
+            message += '\n'
+            message += logging_utils.STARLINE
+            logger.info(message)
 
         if return_train_score:
             return np.array(scores)[:, [0, 1]]

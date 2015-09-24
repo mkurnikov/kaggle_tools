@@ -13,9 +13,10 @@ def get_final_estimator(pipeline):
     else:
         return pipeline
 
+from sklearn.base import ClassifierMixin, RegressorMixin
 
-def find_xgbmodel_param_prefix(estimator, s=''):
-    if isinstance(estimator, xgb.XGBModel):
+def find_final_estimator_param_prefix(estimator, s=''):
+    if isinstance(estimator, (ClassifierMixin, RegressorMixin)):
         return '', True
 
     # print('s:', s)
@@ -29,7 +30,7 @@ def find_xgbmodel_param_prefix(estimator, s=''):
             # if isinstance(est, xgb.XGBModel):
             #     return '__'.join([name, s]), True
 
-            s, is_cont = find_xgbmodel_param_prefix(est, s)
+            s, is_cont = find_final_estimator_param_prefix(est, s)
             if is_cont:
                 return '__'.join([name, s]), True
             else:

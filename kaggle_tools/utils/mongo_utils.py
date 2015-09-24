@@ -293,7 +293,7 @@ class MongoCollectionWrapper(object):
 
         est_name = serializer.serialize(pipeline_utils.get_final_estimator(estimator).__class__.__name__)
 
-        prefix = pipeline_utils.find_xgbmodel_param_prefix(estimator)[0]
+        prefix = pipeline_utils.find_final_estimator_param_prefix(estimator)[0]
         # print(prefix)
         est_path = _path_from_prefix(estimator, prefix)
         # print(est_path)

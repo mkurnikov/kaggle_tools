@@ -9,6 +9,37 @@ from sklearn.utils import deprecated
 from sklearn.base import BaseEstimator, TransformerMixin
 
 
+class FeatureColumnsExtractor(BaseEstimator, TransformerMixin):
+    def __init__(self, columns=None):
+        if columns is None:
+            raise AttributeError("Columns for features haven't been provided.")
+
+        if len(columns) == 0:
+            raise AttributeError("Length of columns array is zero.")
+        self.columns = columns
+
+        self.idtype = None
+        if isinstance(columns[0], str) or isinstance(columns[0], unicode):
+            self.idtype = 'pandas'
+        elif isinstance(columns[0], int):
+            self.idtype = 'numpy'
+
+        if self.idtype is None:
+            raise AttributeError("Unknown type of column's id: {}".format(type(columns[0])))
+
+
+    def fit(self, X, y=None):
+        return self
+
+
+    def transform(self, X):
+        if self.idtype == 'pandas':
+            return X[self.columns]
+
+        # In case of numpy
+        raise NotImplementedError
+
+
 class StringToInt(BaseEstimator, TransformerMixin):
     """
         Map Series object's values from arbitrary objects to unique integer. It's useful for sklearn algorithms.

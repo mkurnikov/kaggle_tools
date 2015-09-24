@@ -1,4 +1,7 @@
-from __future__ import division, print_function
+from __future__ import division, print_function, \
+    unicode_literals, absolute_import
+# noinspection PyUnresolvedReferences
+from py3compatibility import *
 
 import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin
@@ -7,36 +10,8 @@ from sklearn.utils.validation import check_X_y, check_array
 from sklearn.utils.random import sample_without_replacement
 from sklearn.utils.validation import check_random_state
 
-class BaseEnsembleEstimator(BaseEstimator):
-    # TODO - move all general code here
-    pass
-
-
-class EnsembleClassifier(BaseEnsembleEstimator, ClassifierMixin):
-    #VotingClassifier satisfy.
-
-    # TODO - majorite vote for prediction
-    # TODO - calibration
-    # TODO - average(or some other metric) for predict_proba
-    pass
-
-nonlinearity = np.sqrt
-
-def to_interval(low, high):
-    # print('interval:', str([low, high]))
-    def shrink_to_interval(y):
-        low = 1.0
-        high = 69.0
-        y[y < low] = low
-        y[y > high] = high
-        return y
-    return shrink_to_interval
-
-def shrinker(x):
-    return to_interval(nonlinearity(1.0), nonlinearity(69.0))(x)
-
 import warnings
-class EnsembleRegressor(BaseEnsembleEstimator, RegressorMixin):
+class EnsembleRegressor(BaseEstimator, RegressorMixin):
     """
         Meta estimator that averages predictions from all level-0 estimators.
     """
@@ -49,8 +24,8 @@ class EnsembleRegressor(BaseEnsembleEstimator, RegressorMixin):
             #                      'Current weights = {}, sum up to {}'.format(weights, sum(weights)))
         self.weights = weights
         self.subsample = subsample
-        self.preds_transform = shrinker
-        # self.preds_transform = prediction_transform
+        # self.preds_transform = shrinker
+        self.preds_transform = prediction_transform
         self.fit_target_transform = fit_target_transform
         self.rng = check_random_state(random_state)
 
@@ -161,27 +136,3 @@ class EnsembleRegressor(BaseEnsembleEstimator, RegressorMixin):
             if verbose:
                 print('Classifier: %s, score: %f' % (str(estimator), scoring_func(predictions[:, i], y)))
         return scoring_func(predictions.mean(axis=1), y)
-
-
-if __name__ == '__main__':
-    from sklearn.linear_model import Ridge, Lasso
-    from sklearn.datasets import make_regression
-    from sklearn.cross_validation import train_test_split
-
-    X, y = make_regression(random_state=1)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-    clf1 = Ridge()
-    clf2 = Lasso(random_state=1)
-    clf3 = Lasso(alpha=16.0)
-
-    ensemble = EnsembleRegressor(estimators=[clf1, clf2, clf3])
-    ensemble.fit(X_train, y_train)
-    print(ensemble.score(X_test, y_test))
-
-    from sklearn.metrics import r2_score
-    def obj(*args, **kwargs):
-        return 1 - r2_score(*args, **kwargs)
-    print(ensemble.fit_weights(X_test, y_test, obj, step=0.05))
-
-
-

@@ -18,7 +18,8 @@ from sklearn.grid_search import GridSearchCV
 from kaggle_tools.utils.misc_utils import _get_array_hash
 from kaggle_tools.utils.misc_utils import pprint_cross_val_scores, \
     _get_pprinted_cross_val_scores, _get_pprinted_mean
-
+from kaggle_tools.utils import logging_utils
+import json
 
 class _CVTrainTestScoreTuple(namedtuple('_CVTrainTestScoreTuple',
                                         ('parameters',
@@ -57,14 +58,14 @@ class CVResult(object):
 
     def __repr__(self):
         msg = ''
-        msg += str(self.estimator) + '\n'
+        msg += json.dumps(logging_utils.pipeline_to_dict(self.estimator), indent=2) + '\n'
         msg += str((self.X.shape, self.y.shape)) + '\n'
         msg += str(self.custom_est_params) + '\n'
         msg += str(self.cv) + '\n'
 
         if self.score_type == 'array':
-            train_score = _get_pprinted_cross_val_scores(self.scores[:, [0]].flatten())
-            test_score = _get_pprinted_cross_val_scores(self.scores[:, [1]].flatten())
+            train_score = _get_pprinted_cross_val_scores(self.scores[0].flatten())
+            test_score = _get_pprinted_cross_val_scores(self.scores[1].flatten())
             msg += str((train_score, test_score))
 
         elif self.score_type == 'number':
@@ -75,3 +76,19 @@ class CVResult(object):
             raise ValueError
 
         return msg
+
+
+    @property
+    def estimator_(self):
+        return clone(self.estimator, safe=False)
+
+    @property
+    def scores_(self):
+        return clone(self.scores, safe=False)
+
+    @property
+    def custom_est_params_(self):
+        return clone(self.custom_est_params, safe=False)
+
+    def cv_(self):
+        return clone(self.cv, safe=False)

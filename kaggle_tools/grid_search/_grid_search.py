@@ -8,8 +8,10 @@ from sklearn.base import clone
 from sklearn.externals.joblib import delayed
 from sklearn.grid_search import _fit_and_score
 
+
 from ._base import MyBaseGridSearch
 from ._helpers import CVResult
+from kaggle_tools.utils import logging_utils
 
 
 def custom_fit_and_score_(estimator, X, y, scorer,
@@ -53,7 +55,11 @@ class MyGridSearchCV(MyBaseGridSearch):
                                      scores=scores, scorer=self.scorer_)
 
         if self.logger is not None:
-            self.logger.info(current_cv_result)
+            message = str(current_cv_result)
+            message += '\n'
+            message += logging_utils.STARLINE
+            self.logger.info(message)
+
         if self.collection_wrapper is not None:
             self.collection_wrapper.insert_cv_result(current_cv_result)
 

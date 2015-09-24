@@ -50,7 +50,7 @@ def xgb_early_stop_fit_and_score(estimator, X, y, scorer,
     # y_train, y_hold_out = y_train.iloc[5000:], y_train.iloc[:5000]
 
     eval_set = [(X_train, y_train), (X_hold_out, y_hold_out)]
-    xgb_param_prefix = pipeline_utils.find_xgbmodel_param_prefix(estimator)[0]
+    xgb_param_prefix = pipeline_utils.find_final_estimator_param_prefix(estimator)[0]
     fit_params = {
         xgb_param_prefix + 'eval_set': eval_set,
         xgb_param_prefix + 'early_stopping_rounds': early_stopping_rounds,
