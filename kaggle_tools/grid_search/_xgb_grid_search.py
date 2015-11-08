@@ -1,12 +1,20 @@
 from __future__ import division, print_function, \
     unicode_literals, absolute_import
-# noinspection PyUnresolvedReferences
-from py3compatibility import *
+
+import six
+if six.PY2:
+	# noinspection PyUnresolvedReferences
+	from py3compatibility import *
+
 
 import time
 import numbers
 import warnings
-import xgboost as xgb
+try:
+    import xgboost as xgb
+except Exception as e:
+    pass
+
 import numpy as np
 
 from sklearn.base import clone

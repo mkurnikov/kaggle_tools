@@ -1,6 +1,10 @@
 from __future__ import division, print_function
-# noinspection PyUnresolvedReferences
-from py3compatibility import *
+
+import six
+if six.PY2:
+	# noinspection PyUnresolvedReferences
+	from py3compatibility import *
+
 
 import warnings
 import numbers

@@ -1,6 +1,10 @@
 from __future__ import division, print_function
-# noinspection PyUnresolvedReferences
-from py3compatibility import *
+
+import six
+if six.PY2:
+	# noinspection PyUnresolvedReferences
+	from py3compatibility import *
+
 
 from collections import Sized
 from collections import namedtuple
@@ -13,7 +17,7 @@ from sklearn.cross_validation import check_cv, check_scoring
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.grid_search import GridSearchCV
 
-from kaggle_tools.base import is_classifier, clone
+from sklearn.base import is_classifier, clone
 
 
 

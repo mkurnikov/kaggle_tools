@@ -14,6 +14,9 @@ class FeatureColumnsExtractor(BaseEstimator, TransformerMixin):
         if columns is None:
             raise AttributeError("Columns for features haven't been provided.")
 
+        if type(columns) != list:
+            raise AttributeError('columns argument has to be array.')
+
         if len(columns) == 0:
             raise AttributeError("Length of columns array is zero.")
         self.columns = columns
@@ -65,6 +68,9 @@ class StringToInt(BaseEstimator, TransformerMixin):
     def transform(self, X):
         X = check_array(X, copy=True, dtype=None, force_all_finite=False, ensure_2d=True)
 
+        if X.shape[1] != 1:
+            raise ValueError('Input array has to be 1d, got {} instead.'.format(X_integers.shape))
+
         n_samples = X.shape[0]
         # it can process np.nan as a separate value out of box.
         unique_vals, X_integers = np.unique(X, return_inverse=True)
@@ -78,4 +84,5 @@ class StringToInt(BaseEstimator, TransformerMixin):
         if self.nan_strategy == 'mask':
             X_integers[X_integers == nan_value] = np.nan
 
-        return X_integers#.reshape((n_samples, 1))
+
+        return X_integers.reshape((n_samples, 1))

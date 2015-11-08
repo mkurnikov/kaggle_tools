@@ -1,9 +1,17 @@
 from __future__ import division, print_function, \
     unicode_literals, absolute_import
-# noinspection PyUnresolvedReferences
-from py3compatibility import *
 
-import xgboost as xgb
+import six
+if six.PY2:
+	# noinspection PyUnresolvedReferences
+	from py3compatibility import *
+
+
+try:
+    import xgboost as xgb
+except Exception as e:
+    pass
+
 from sklearn.pipeline import Pipeline
 
 

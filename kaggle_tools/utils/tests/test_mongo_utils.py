@@ -1,15 +1,18 @@
 from __future__ import division, print_function, \
     unicode_literals, absolute_import
-# noinspection PyUnresolvedReferences
-from py3compatibility import *
+
+import six
+if six.PY2:
+	# noinspection PyUnresolvedReferences
+	from py3compatibility import *
+
 
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import KFold
 
 from sklearn.utils.testing import assert_equal
-
-from xgboost import XGBRegressor
+from sklearn.linear_model import LinearRegression
 
 from kaggle_tools.utils.mongo_utils import MongoCollectionWrapper, MongoSerializer
 from kaggle_tools.utils import pipeline_utils
@@ -19,7 +22,7 @@ from kaggle_tools.utils.mongo_utils import _path_from_prefix
 def test_path_from_prefix():
     pipeline = Pipeline([
         ('11', Pipeline([
-            ('22', XGBRegressor())
+            ('22', LinearRegression())
         ]))
     ])
 

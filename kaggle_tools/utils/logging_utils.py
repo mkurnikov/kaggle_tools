@@ -1,7 +1,10 @@
 from __future__ import division, print_function, \
     unicode_literals, absolute_import
-# noinspection PyUnresolvedReferences
-from py3compatibility import *
+
+import six
+if six.PY2:
+    # noinspection PyUnresolvedReferences
+    from py3compatibility import *
 
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.pipeline import FeatureUnion, Pipeline
@@ -49,7 +52,6 @@ STARLINE = '*' * 120
 
 if __name__ == '__main__':
     from sklearn.linear_model import LinearRegression
-    from xgboost import XGBRegressor
     from sklearn.preprocessing import PolynomialFeatures
 
     from kaggle_tools.feature_extraction import Identity
@@ -59,7 +61,7 @@ if __name__ == '__main__':
             ('Polynomials', PolynomialFeatures())
         ])),
         ('Estimator', Pipeline([
-            ('XGBRegressor', XGBRegressor())
+            ('XGBRegressor', LinearRegression())
         ]))
     ])
 

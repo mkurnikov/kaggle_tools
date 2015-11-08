@@ -1,7 +1,11 @@
 from __future__ import division, print_function, \
     unicode_literals, absolute_import
-# noinspection PyUnresolvedReferences
-from py3compatibility import *
+
+import six
+if six.PY2:
+	# noinspection PyUnresolvedReferences
+	from py3compatibility import *
+
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 import pickle
@@ -61,7 +65,7 @@ class BaseSubmittion(six.with_metaclass(ABCMeta)):
             raise ValueError('Pipeline is not fitted.')
 
         self.original_test_set = X
-        predictions = self.pipeline.predict(X)
+        predictions = self.pipeline.predict(X).ravel()
         return predictions
 
 
@@ -72,26 +76,26 @@ class BaseSubmittion(six.with_metaclass(ABCMeta)):
         pass
 
 
-    @abstractproperty
-    def project_submission_id_(self):
-        """ID for specific type of submissions. Like __class__.__name__.
-        In case of different types of base submissions in project.
-        """
-        pass
-
-
-    @abstractproperty
-    def serialized_models_directory_(self):
-        """Directory for pickled models.
-        """
-        pass
-
-
-    @abstractproperty
-    def submission_mongo_collection_(self):
-        """Specify which collection should be used to save results.
-        """
-        pass
+    # @abstractproperty
+    # def project_submission_id_(self):
+    #     """ID for specific type of submissions. Like __class__.__name__.
+    #     In case of different types of base submissions in project.
+    #     """
+    #     pass
+    #
+    #
+    # @abstractproperty
+    # def serialized_models_directory_(self):
+    #     """Directory for pickled models.
+    #     """
+    #     pass
+    #
+    #
+    # @abstractproperty
+    # def submission_mongo_collection_(self):
+    #     """Specify which collection should be used to save results.
+    #     """
+    #     pass
 
 
     def _save(self, show_json=False, serialize_fitted_pipeline=False):
