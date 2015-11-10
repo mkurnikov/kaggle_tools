@@ -7,7 +7,7 @@ if six.PY2:
     from py3compatibility import *
 
 import numpy as np
-from sklearn.cross_validation import _fit_and_score
+from sklearn.model_selection._validation import _fit_and_score
 from sklearn.utils.validation import indexable
 from sklearn.cross_validation import check_cv, check_scoring
 from sklearn.externals.joblib import Parallel, delayed

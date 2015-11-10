@@ -2,20 +2,21 @@ from __future__ import division, print_function, \
     unicode_literals, absolute_import
 
 import six
-if six.PY2:
-	# noinspection PyUnresolvedReferences
-	from py3compatibility import *
 
+if six.PY2:
+    # noinspection PyUnresolvedReferences
+    from py3compatibility import *
 
 import json
 import numpy as np
 import inspect
 from copy import deepcopy
 from collections import Callable
+import warnings
 
 from sklearn.base import BaseEstimator, clone
 from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.cross_validation import _PartitionIterator
+from sklearn.model_selection import BaseCrossValidator
 
 from kaggle_tools.grid_search import CVResult
 from kaggle_tools.utils import misc_utils
@@ -36,11 +37,89 @@ def _path_from_prefix(estimator, prefix):
                     estimator = step
     return path
 
+#
+# from inspect import signature
+# import warnings
+#
+# from sklearn.base import _pprint
+#
+#
+# class CVSerializer(object):
+#     def _get_param_names(cls):
+#         """Get parameter names for the estimator"""
+#         # fetch the constructor or the original constructor before
+#         # deprecation wrapping if any
+#         init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+#         if init is object.__init__:
+#             # No explicit constructor to introspect
+#             return []
+#
+#         # introspect the constructor arguments to find the model parameters
+#         # to represent
+#         init_signature = signature(init)
+#         # Consider the constructor parameters excluding 'self'
+#         parameters = [p for p in init_signature.parameters.values()
+#                       if p.name != 'self' and p.kind != p.VAR_KEYWORD]
+#         for p in parameters:
+#             if p.kind == p.VAR_POSITIONAL:
+#                 raise RuntimeError("scikit-learn estimators should always "
+#                                    "specify their parameters in the signature"
+#                                    " of their __init__ (no varargs)."
+#                                    " %s with constructor %s doesn't "
+#                                    " follow this convention."
+#                                    % (cls, init_signature))
+#         # Extract and sort argument names excluding 'self'
+#         return sorted([p.name for p in parameters])
+#
+#
+#     def get_params(self, deep=True):
+#         """Get parameters for this estimator.
+#
+#         Parameters
+#         ----------
+#         deep: boolean, optional
+#             If True, will return the parameters for this estimator and
+#             contained subobjects that are estimators.
+#
+#         Returns
+#         -------
+#         params : mapping of string to any
+#             Parameter names mapped to their values.
+#         """
+#         out = dict()
+#         for key in self._get_param_names():
+#             # We need deprecation warnings to always be on in order to
+#             # catch deprecated param values.
+#             # This is set in utils/__init__.py but it gets overwritten
+#             # when running under python3 somehow.
+#             warnings.simplefilter("always", DeprecationWarning)
+#             try:
+#                 with warnings.catch_warnings(record=True) as w:
+#                     value = getattr(self, key, None)
+#                 if len(w) and w[0].category == DeprecationWarning:
+#                     # if the parameter is deprecated, don't show it
+#                     continue
+#             finally:
+#                 warnings.filters.pop(0)
+#
+#             # XXX: should we rather test if instance of estimator?
+#             if deep and hasattr(value, 'get_params'):
+#                 deep_items = value.get_params().items()
+#                 out.update((key + '__' + k, val) for k, val in deep_items)
+#             out[key] = value
+#         return out
+#
+#     def serialize(self, cv):
+#         class_name = self.__class__.__name__
+#         return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
+#                                                offset=len(class_name),),)
+
 
 class MongoSerializer(object):
     """MongoDB equivalent to __repr__ method for logging.
     Use in conjunction with MongoCollection object (alternative to Logger object).
     """
+
     def __init__(self, ignored_fields=None):
         if ignored_fields is None:
             ignored_fields = []
@@ -69,7 +148,7 @@ class MongoSerializer(object):
         elif isinstance(obj, BaseEstimator):
             return self._estimator(obj)
 
-        elif isinstance(obj, _PartitionIterator):
+        elif isinstance(obj, BaseCrossValidator):
             return self._cv(obj)
 
         elif isinstance(obj, np.ndarray):
@@ -85,7 +164,9 @@ class MongoSerializer(object):
             return self._callable(obj)
 
         else:
-            return obj
+            warnings.warn('Haven\'t found serializer for {} object, use repr() instead.'
+                          .format(obj), RuntimeWarning)
+            return repr(obj)
 
 
     def _submission(self, submission_obj):
@@ -135,7 +216,7 @@ class MongoSerializer(object):
 
     def _dict(self, dict_obj):
         json_obj = {}
-        for k, v in dict_obj.iteritems():
+        for k, v in dict_obj.items():
             if k not in self.ignored_fields:
                 json_obj[k] = self.serialize(v)
 
@@ -148,7 +229,7 @@ class MongoSerializer(object):
 
     def _callable(self, obj):
         if inspect.isfunction(obj):
-            #user-defined (unbound) functions
+            # user-defined (unbound) functions
             args, varargs, kwargs, _ = inspect.getargspec(obj)
             arguments = []
             arguments.extend(args)
@@ -160,7 +241,7 @@ class MongoSerializer(object):
                                            args=', '.join(arguments))
 
         elif inspect.ismethod(obj):
-            #class methods, instance methods
+            # class methods, instance methods
             args, varargs, kwargs, _ = inspect.getargspec(obj)
             bounded_obj_name = obj.__self__.__name__
             args = args[1:]
@@ -188,7 +269,6 @@ class MongoSerializer(object):
 
 
     def _cv(self, cv):
-        # TODO: create much better representation using something like non-existent cv.get_params()
         return repr(cv)
 
 
@@ -221,7 +301,6 @@ class MongoSerializer(object):
         return json_obj
 
 
-
 class MongoCollectionWrapper(object):
     def __init__(self, serializer=None, collection=None):
         # serializer validation
@@ -251,12 +330,11 @@ class MongoCollectionWrapper(object):
 
 
     def check_presence_in_mongo_collection(self, estimator, X, y, cv,
-                                            params=None, scorer=None):
+                                           params=None, scorer=None):
         data = {
             'X': misc_utils._get_array_hash(X),
             'y': misc_utils._get_array_hash(y)
         }
-
 
         cv = self.serializer.serialize(cv)
         estimator = clone(estimator)
@@ -273,7 +351,7 @@ class MongoCollectionWrapper(object):
 
 
     def check_presence_in_mongo_collection_early_stop(self, estimator, X, y, cv,
-                                            params=None, scorer=None):
+                                                      params=None, scorer=None):
         data = {
             'X': misc_utils._get_array_hash(X),
             'y': misc_utils._get_array_hash(y)
@@ -321,4 +399,5 @@ class MongoCollectionWrapper(object):
 
 if __name__ == '__main__':
     from kaggle_tools.utils.tests import tests_mongo_utils
+
     tests_mongo_utils.main()

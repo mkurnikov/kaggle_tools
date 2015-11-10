@@ -3,8 +3,8 @@ from __future__ import division, print_function, \
 
 import six
 if six.PY2:
-	# noinspection PyUnresolvedReferences
-	from py3compatibility import *
+    # noinspection PyUnresolvedReferences
+    from py3compatibility import *
 
 
 from sklearn.linear_model import LinearRegression
@@ -33,9 +33,9 @@ def test_path_from_prefix():
 def test_mongo_serializer_cv():
     serializer = MongoSerializer()
 
-    cv = KFold(10, n_folds=4)
+    cv = KFold(n_folds=4)
     assert_equal(serializer.serialize(cv),
-                 'sklearn.cross_validation.KFold(n=10, n_folds=4, shuffle=False, random_state=None)')
+                 'KFold(n_folds=4, random_state=None, shuffle=False)')
 
 
 def test_mongo_serializer_func():
